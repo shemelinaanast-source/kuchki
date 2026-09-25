@@ -6,6 +6,7 @@ function enterSpace(id){
   const p = byId(id); if (!p) return;
   closeNew();
   open = id; savedCam = {...cam}; spPan = {x:0,y:0}; spZ = 1;
+  askDelete(false);
   const k = 2.1;
   animateCam({k, x: innerWidth/2 - p._x*k, y: innerHeight/2 - p._y*k}, 650);
   renderSpace();
@@ -25,6 +26,37 @@ function exitSpace(){
   setTimeout(() => { if (!open) space.hidden = true; }, reduced ? 0 : 700);
   animateCam(savedCam || fitCam(), 750, () => bump(id));
 }
+/* ---------- deleting a period: two steps, so it never happens by accident ---------- */
+function askDelete(on){
+  const p = byId(open);
+  if (on && p){
+    const n = p.items.length;
+    $('#delText').textContent = n ? `удалить «${p.name}» и всё внутри (${n})?` : `удалить «${p.name}»?`;
+  }
+  $('#delAsk').hidden = !on;
+  $('#delBtn').hidden = on;
+}
+function deletePeriod(){
+  const p = byId(open); if (!p) return;
+  const i = state.periods.indexOf(p);
+  if (playing && p.items.some(it => it.id === playing.id)) stopPlay();
+  p.items.forEach(it => { if (it.local) Store.delTrack(it.id); });
+  state.periods.splice(i, 1);
+  if (!state.periods.length) state.periods.push(blank().periods[0]);
+  else if (i === state.periods.length) cur().end = null;   // the one before becomes "now" again
+  save();
+  open = null;
+  space.classList.remove('open');
+  document.body.classList.remove('space-on');
+  renderMap();
+  setTimeout(() => { if (!open) space.hidden = true; }, reduced ? 0 : 700);
+  animateCam(fitCam(), 750);
+  toast(`Кучка «${p.name}» удалена`);
+}
+$('#delBtn').onclick = () => askDelete(true);
+$('#delNo').onclick = () => askDelete(false);
+$('#delYes').onclick = deletePeriod;
+
 function paintBg(p){
   space.style.background = bgValue(p.bg);
   space.classList.toggle('dark', isDark(p.bg));

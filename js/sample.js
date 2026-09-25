@@ -13,7 +13,7 @@ function sample(){
       {type:'photo',bg:'radial-gradient(60% 50% at 50% 60%,#E9C3A8 0%,#C99477 60%,#F3E2D6 61%,#F9EDE4 100%)',caption:'первая кривая чашка',x:-290,y:-10,ts:'2026-02-02T18:05',r:-4,size:1.1},
       song('Björk — Hyperballad',60,-80,'2026-02-11T23:40'),
       {type:'quote',text:'Ошибка — это тоже форма',x:280,y:-20,ts:'2026-02-19T21:02',size:1.1},
-      {type:'goal',text:'Записаться на гончарный курс',done:true,x:-20,y:10,ts:'2026-02-03T10:12'},
+      {type:'goal',text:'Записаться на гончарный курс',done:true,x:-40,y:75,ts:'2026-02-03T10:12'},
       {type:'photo',bg:'linear-gradient(135deg,#FFF1D8 0%,#F8D8B0 40%,#E8B598 100%)',caption:'свет в мастерской',x:40,y:190,ts:'2026-03-07T16:20',r:3,size:.8},
       song('Cocteau Twins — Heaven or Las Vegas',290,150,'2026-03-15T01:10'),
       {type:'quote',text:'Красота живёт в незаконченном',x:-290,y:230,ts:'2026-03-28T20:44',size:.8},

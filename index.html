@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<div id="map"><canvas id="gridCv" aria-hidden="true"></canvas><div id="world"></div></div>
+<div id="map"><div id="world"></div></div>
 
 <div class="topbar">
   <div class="brand">Кучки<small id="issue">выпуск № 4 · сентябрь 2026<span>что меня вдохновляло</span></small></div>
@@ -36,6 +36,12 @@
         <button class="ghost" id="spZoomLbl" type="button" title="Показать всё (Shift+1)">100%</button>
         <button class="ghost" id="spIn" type="button" aria-label="Приблизить">+</button>
       </div>
+      <button class="ghost del-btn" id="delBtn" type="button">удалить кучку</button>
+      <span class="del-ask" id="delAsk" role="group" aria-label="Подтверждение удаления" hidden>
+        <span id="delText">удалить кучку?</span>
+        <button class="ghost danger" id="delYes" type="button">удалить</button>
+        <button class="ghost" id="delNo" type="button">нет</button>
+      </span>
     </div>
     <div class="bgpick" id="bgPick" role="group" aria-label="Фон пространства"></div>
   </div>
@@ -52,7 +58,7 @@
 <div class="grain" aria-hidden="true"></div>
 
 <div class="dock" id="dock">
-  <div class="pop" id="newPop" hidden>
+  <div class="pop glass" id="newPop" hidden>
     <h3>Новая кучка</h3>
     <p id="newNote"></p>
     <form class="pop-row" id="newForm">
@@ -65,7 +71,7 @@
     <button class="linkbtn" id="nowPlaying" type="button" hidden></button>
     <button class="linkbtn" id="newBtn" type="button">+ новая кучка</button>
   </div>
-  <form class="composer" id="composer">
+  <form class="composer glass" id="composer">
     <input id="composeText" placeholder="Цитата, мысль или ссылка на песню…" autocomplete="off">
     <label class="cbtn" for="fileIn" title="Добавить картинку или mp3">＋<span class="lbl"> файл</span></label>
     <input class="sr" type="file" id="fileIn" accept="image/*,audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple>

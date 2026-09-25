@@ -1,5 +1,5 @@
-// map.js — карта: ветка периодов, светящиеся облачка, обложки, превью при наведении,
-// карандашная сетка, камера (панорама и зум как в Figma).
+// map.js — карта: ультрамариновая ветка периодов, светящиеся облачка, обложки,
+// превью при наведении, камера (панорама и зум как в Figma).
 
 /* ---------- map geometry ---------- */
 const GAP = 370;
@@ -14,11 +14,6 @@ function tokenPos(p, j){
   const a = j*2.39996 + hash(p.id)*6.28;
   const r = p.items.length === 1 ? 0 : 14*Math.sqrt(j + .35);
   return {x:Math.cos(a)*r, y:Math.sin(a)*r*.85, a};
-}
-// one catmull-rom stretch of the branch, from pts[i] to pts[i+1]
-function segment(pts, i){
-  const p0 = pts[i-1] || pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2] || p2;
-  return `M${p1.x},${p1.y} C${p1.x + (p2.x-p0.x)/6},${p1.y + (p2.y-p0.y)/6} ${p2.x - (p3.x-p1.x)/6},${p2.y - (p3.y-p1.y)/6} ${p2.x},${p2.y}`;
 }
 function smooth(pts){
   let s = `M${pts[0].x},${pts[0].y}`;
@@ -101,18 +96,10 @@ const MONTHS = ['январь','февраль','март','апрель','ма�
 function renderMap(){
   layout();
   const ps = state.periods, last = cur();
-  // one clean line; each stretch fades from one period's colour into the next
-  const pts = ps.map(p => ({x:p._x, y:p._y})), op = p => p === last ? 1 : .38 + .62*Math.min(1, p.items.length/6);
-  let defs = '', svg = '';
-  for (let i = 0; i < ps.length - 1; i++){
-    const a = ps[i], b = ps[i+1];
-    defs += `<linearGradient id="br${i}" gradientUnits="userSpaceOnUse" x1="${a._x}" y1="${a._y}" x2="${b._x}" y2="${b._y}"><stop offset="0" stop-color="${cloudColors(a.bg)[0]}" stop-opacity="${op(a).toFixed(2)}"/><stop offset="1" stop-color="${cloudColors(b.bg)[0]}" stop-opacity="${op(b).toFixed(2)}"/></linearGradient>`;
-    svg += `<path class="branch" d="${segment(pts, i)}" style="stroke:url(#br${i})"/>`;
-  }
+  // one ultramarine line through every period, fading off into the future
   const t = state._tip;
-  defs += `<linearGradient id="brTip" gradientUnits="userSpaceOnUse" x1="${last._x}" y1="${last._y}" x2="${t.x}" y2="${t.y}"><stop offset="0" stop-color="${cloudColors(last.bg)[0]}"/><stop offset="1" stop-color="${cloudColors(last.bg)[0]}" stop-opacity=".15"/></linearGradient>`;
-  svg += `<path class="tip" d="M${last._x},${last._y} C${last._x+100},${last._y} ${t.x-90},${t.y} ${t.x},${t.y}" style="stroke:url(#brTip)"/>`;
-  svg = `<defs>${defs}</defs>` + svg;
+  let svg = `<path class="branch" d="${smooth(ps.map(p => ({x:p._x, y:p._y})))}"/>`;
+  svg += `<path class="tip" d="M${last._x},${last._y} C${last._x+100},${last._y} ${t.x-90},${t.y} ${t.x},${t.y}"/>`;
   // synapses: same song / link / phrase in different periods
   const groups = {};
   ps.forEach((p, pi) => p.items.forEach((it, j) => {
@@ -164,53 +151,6 @@ function lightSyn(id){
 function applyCam(){
   world.style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.k})`;
   map.classList.toggle('near', cam.k >= 1.35);
-  drawGrid();
-}
-/* pink-pencil grid on canvas: every segment gets its own pressure and a hair of wobble,
-   keyed to world coordinates so the lines don't shimmer while you pan */
-const gcv = $('#gridCv'), gctx = gcv.getContext('2d');
-let dpr = 1;
-function sizeGrid(){
-  dpr = Math.min(2, devicePixelRatio || 1);
-  gcv.width = Math.round(innerWidth*dpr); gcv.height = Math.round(innerHeight*dpr);
-}
-const n2 = (a, b) => { const v = Math.sin(a*127.1 + b*311.7)*43758.5453; return v - Math.floor(v); };
-function drawGrid(){
-  const W = innerWidth, H = innerHeight, c = gctx;
-  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-  // like Figma: zoom far out and the grid steps up ×5 instead of turning into a pink fog
-  let step = 28; while (step*cam.k < 14) step *= 5;
-  const s = step*cam.k, minorA = .10*Math.min(1, (s - 14)/26), majorA = .19;
-  const i0 = Math.floor(-cam.x/s) - 1, i1 = Math.ceil((W - cam.x)/s) + 1;
-  const j0 = Math.floor(-cam.y/s) - 1, j1 = Math.ceil((H - cam.y)/s) + 1;
-  // bucket segments by pressure so we stroke a handful of paths, not thousands
-  const B = 4, paths = {minor:[], major:[]};
-  for (let b = 0; b < B; b++){ paths.minor.push(new Path2D()); paths.major.push(new Path2D()); }
-  const wob = (a, b) => (n2(a, b) - .5)*.9;
-  for (let i = i0; i <= i1; i++){
-    const kind = i % 5 === 0 ? 'major' : 'minor'; if (kind === 'minor' && minorA < .005) continue;
-    const x = cam.x + i*s, wi = i*step;
-    for (let j = j0; j < j1; j++){
-      const wj = j*step, b = Math.floor(n2(wi + .3, wj)*B);
-      const pth = paths[kind][b];
-      pth.moveTo(x + wob(wi, wj), cam.y + j*s); pth.lineTo(x + wob(wi, wj + step), cam.y + (j+1)*s);
-    }
-  }
-  for (let j = j0; j <= j1; j++){
-    const kind = j % 5 === 0 ? 'major' : 'minor'; if (kind === 'minor' && minorA < .005) continue;
-    const y = cam.y + j*s, wj = j*step;
-    for (let i = i0; i < i1; i++){
-      const wi = i*step, b = Math.floor(n2(wi, wj + .7)*B);
-      const pth = paths[kind][b];
-      pth.moveTo(cam.x + i*s, y + wob(wj, wi)); pth.lineTo(cam.x + (i+1)*s, y + wob(wj, wi + step));
-    }
-  }
-  c.lineCap = 'round';
-  for (const kind of ['minor', 'major']){
-    c.lineWidth = kind === 'major' ? 1 : .8;
-    const a = kind === 'major' ? majorA : minorA;
-    paths[kind].forEach((pth, b) => { c.strokeStyle = `rgba(214,96,140,${(a*(.5 + .5*(b + 1)/B)).toFixed(3)})`; c.stroke(pth); });
-  }
 }
 let camAnim = 0;
 function animateCam(to, dur = 700, done){

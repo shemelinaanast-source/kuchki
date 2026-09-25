@@ -52,7 +52,7 @@ addEventListener('keydown', e => {
     open ? glideSp(() => spZoomAt(innerWidth/2, innerHeight/2, f)) : zoomAt(innerWidth/2, innerHeight/2, f);
   }
 });
-addEventListener('resize', () => { sizeGrid(); if (!open) Object.assign(cam, fitCam()); applyCam(); });
+addEventListener('resize', () => { if (!open) Object.assign(cam, fitCam()); applyCam(); });
 
 /* ---------- start ---------- */
 (async function start(){
@@ -66,6 +66,6 @@ addEventListener('resize', () => { sizeGrid(); if (!open) Object.assign(cam, fit
       if (blob){ it.src = URL.createObjectURL(blob); trackFiles.set(it.id, blob); }
     }));
   } else state = sample();
-  syncNote(); renderMap(); sizeGrid();
+  syncNote(); renderMap();
   Object.assign(cam, fitCam()); applyCam();
 })();
