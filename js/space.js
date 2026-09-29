@@ -1,4 +1,4 @@
-// space.js — пространство внутри кучки: фон, название, «суть периода»,
+// space.js — пространство внутри кучки: полоса с заголовком, название,
 // вещи, которые можно двигать, увеличивать, делать обложкой; свой зум.
 
 /* ---------- space ---------- */
@@ -10,6 +10,7 @@ function enterSpace(id){
   const k = 2.1;
   animateCam({k, x: innerWidth/2 - p._x*k, y: innerHeight/2 - p._y*k}, 650);
   renderSpace();
+  fitIfCrowded();
   space.style.setProperty('--cx', innerWidth/2 + 'px');
   space.style.setProperty('--cy', innerHeight/2 + 'px');
   space.hidden = false;
@@ -57,12 +58,6 @@ $('#delBtn').onclick = () => askDelete(true);
 $('#delNo').onclick = () => askDelete(false);
 $('#delYes').onclick = deletePeriod;
 
-function paintBg(p){
-  space.style.background = bgValue(p.bg);
-  space.classList.toggle('dark', isDark(p.bg));
-  $('#bgPick').querySelectorAll('.sw[data-k]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.k === p.bg)));
-  $('#bgPick').querySelector('.sw-custom').setAttribute('aria-pressed', String(!bgOf(p.bg)));
-}
 function itemHTML(it){
   const isCover = byId(open)?.coverId === it.id;
   let body = '';
@@ -72,19 +67,12 @@ function itemHTML(it){
       : `<div class="ph fake" style="background:${it.bg}" role="img" aria-label="${esc(it.caption)}"></div>`;
     if (it.caption) body += `<div class="cap">${esc(it.caption)}</div>`;
   } else if (it.type === 'song'){
-    const {artist, title} = splitSong(it.title);
-    if (it.local){
-      body = `<button class="song" type="button" data-act="play" aria-label="Играть: ${esc(it.title)}">
-        <span class="cd"><span class="cd-disc holo" style="--h:${songHue(it)}deg"></span>${it.cover ? `<span class="cd-label" style="background-image:url(${it.cover})"></span>` : ''}<span class="cd-shine"></span><span class="cd-ring"></span><span class="cd-btn">▶</span></span>
-        <span class="song-cap">${artist ? `<small>${esc(artist)}</small>` : ''}<b>${esc(title)}</b><em>${esc(it.platform)} · ${it.src ? 'играть' : 'файл не найден'}</em></span>
-      </button>`;
-    } else
-    body = `<a class="song" href="${esc(it.url)}" target="_blank" rel="noopener" draggable="false">
-      <span class="cd"><span class="cd-disc holo" style="--h:${songHue(it)}deg"></span><span class="cd-shine"></span></span>
-      <span class="song-cap">${artist ? `<small>${esc(artist)}</small>` : ''}<b>${esc(title)}</b><em>${esc(it.platform)} · слушать ↗</em></span>
-    </a>`;
+    const cap = `<span class="song-cap"><b>${esc(it.title)}</b><em>${it.local ? (it.src ? esc(it.platform) : 'файл не найден') : `${esc(it.platform)} ↗`}</em></span>`;
+    body = it.local
+      ? `<button class="song" type="button" data-act="play" aria-label="Играть: ${esc(it.title)}"><span class="cd"><span class="cd-btn">${ICON_PLAY}</span><span class="cd-ring"></span></span>${cap}</button>`
+      : `<a class="song" href="${esc(it.url)}" target="_blank" rel="noopener" draggable="false" aria-label="Слушать: ${esc(it.title)}"><span class="cd"><span class="cd-btn">${ICON_PLAY}</span></span>${cap}</a>`;
   } else if (it.type === 'quote'){
-    body = `<p class="quote">${esc(it.text)}</p>`;
+    body = `<p class="quote${it.sticker ? ' sticker' : ''}">${esc(it.text)}</p>`;
   } else if (it.type === 'goal'){
     body = `<button class="goal${it.done?' done':''}" type="button" data-act="toggle"><span class="ring"></span><span><span class="ey">цель</span><span class="gt">${esc(it.text)}</span></span></button>`;
   } else {
@@ -98,9 +86,8 @@ function itemHTML(it){
 }
 function renderSpace(){
   const p = byId(open); if (!p) return;
-  paintBg(p);
   $('#spName').value = p.name;
-  $('#spDates').textContent = range(p) + (p.end ? '' : 'сейчас');
+  $('#spDates').textContent = monthLabel(p);
   $('#spFormula').value = p.formula || '';
   spWorld.innerHTML = p.items.map(itemHTML).join('');
   applySp();
@@ -109,6 +96,7 @@ function renderSpace(){
 }
 function applySp(){
   spWorld.style.transform = `translate(${spPan.x}px,${spPan.y}px) scale(${spZ})`;
+  dots(space, innerWidth/2 + spPan.x, innerHeight/2 + spPan.y, spZ);
   $('#spZoomLbl').textContent = Math.round(spZ*100) + '%';
 }
 function spZoomAt(px, py, f){
@@ -121,13 +109,20 @@ function glideSp(fn){
   if (!reduced){ spWorld.classList.add('glide'); setTimeout(() => spWorld.classList.remove('glide'), 460); }
   fn(); applySp();
 }
+// on a small window, step back so the whole period is in view when it opens
+function fitIfCrowded(){
+  const p = byId(open); if (!p || !p.items.length) return;
+  const xs = p.items.map(i => i.x), ys = p.items.map(i => i.y);
+  const w = Math.max(...xs) - Math.min(...xs) + 340, h = Math.max(...ys) - Math.min(...ys) + 300;
+  if (w > innerWidth - 40 || h > innerHeight - 260) spFit();
+}
 function spFit(){
   const p = byId(open); if (!p) return;
   glideSp(() => {
     if (!p.items.length){ spZ = 1; spPan = {x:0,y:0}; return; }
     const xs = p.items.map(i => i.x), ys = p.items.map(i => i.y);
     const minX = Math.min(...xs) - 170, maxX = Math.max(...xs) + 170, minY = Math.min(...ys) - 150, maxY = Math.max(...ys) + 150;
-    const top = innerWidth <= 520 ? 250 : 210, bottom = 130;
+    const top = 150, bottom = 110;
     spZ = Math.max(.1, Math.min(1, (innerWidth - 40)/(maxX - minX), (innerHeight - top - bottom)/(maxY - minY)));
     spPan = {x: -(minX + maxX)/2*spZ, y: (top - bottom)/2 - (minY + maxY)/2*spZ};
   });
@@ -139,15 +134,6 @@ $('#backBtn').onclick = exitSpace;
 $('#spName').addEventListener('input', e => { const p = byId(open); if (p) { p.name = e.target.value || 'Без названия'; updateDock(); save(); } });
 $('#spFormula').addEventListener('input', e => { const p = byId(open); if (p) { p.formula = e.target.value; save(); } });
 $('#spFormula').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
-
-// background picker
-$('#bgPick').innerHTML = BGS.map(b => `<button class="sw" type="button" data-k="${b.k}" title="${b.n}" aria-label="Фон: ${b.n}" style="background:${b.v}"></button>`).join('')
-  + `<label class="sw sw-custom" title="Свой цвет" aria-pressed="false"><input type="color" id="bgColor" aria-label="Свой цвет фона" value="#FFE4EE"></label>`;
-$('#bgPick').addEventListener('click', e => {
-  const b = e.target.closest('.sw[data-k]'); if (!b) return;
-  const p = byId(open); if (p) { p.bg = b.dataset.k; paintBg(p); save(); }
-});
-$('#bgColor').addEventListener('input', e => { const p = byId(open); if (p) { p.bg = e.target.value; paintBg(p); save(); } });
 
 // dragging items & panning space
 let sd = null, justDragged = false, spPinch = null;
@@ -183,14 +169,6 @@ spCanvas.addEventListener('pointermove', e => {
   if (!sd.moved) return;
   if (sd.kind === 'item'){ sd.it.x = Math.round(sd.ox + dx/spZ); sd.it.y = Math.round(sd.oy + dy/spZ); sd.el.style.left = sd.it.x + 'px'; sd.el.style.top = sd.it.y + 'px'; }
   else { spPan.x = sd.ox + dx; spPan.y = sd.oy + dy; applySp(); }
-});
-// the light on a CD follows the cursor, like tilting a real disc
-spCanvas.addEventListener('pointermove', e => {
-  if (sd && sd.moved) return;
-  const cd = e.target.closest?.('.cd'); if (!cd) return;
-  const r = cd.getBoundingClientRect();
-  const a = Math.atan2(e.clientY - (r.top + r.height/2), e.clientX - (r.left + r.width/2))*180/Math.PI;
-  cd.style.setProperty('--lx', `${Math.round(a + 70)}deg`);
 });
 space.addEventListener('wheel', e => {
   e.preventDefault();

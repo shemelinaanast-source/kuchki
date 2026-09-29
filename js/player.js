@@ -1,4 +1,4 @@
-// player.js — проигрывание своих mp3: диск крутится, по краю идёт прогресс,
+// player.js — проигрывание своих mp3: треугольник «play» меняется на паузу, идёт время,
 // над строкой ввода видно, что сейчас играет.
 
 const player = $('#player');
@@ -26,8 +26,8 @@ const mmss = t => isFinite(t) ? `${Math.floor(t/60)}:${String(Math.floor(t%60)).
 function syncPlay(){
   spWorld.querySelectorAll('.song.playing,.song.paused').forEach(el => {
     if (!playing || el.closest('.item').dataset.id !== playing.id){
-      el.classList.remove('playing','paused'); el.querySelector('.cd-btn').textContent = '▶';
-      const it = findSong(el.closest('.item').dataset.id); if (it) el.querySelector('.song-cap em').textContent = `${it.platform} · ${it.src ? 'играть' : 'файл не найден'}`;
+      el.classList.remove('playing','paused'); el.querySelector('.cd-btn').innerHTML = ICON_PLAY;
+      const it = findSong(el.closest('.item').dataset.id); if (it) el.querySelector('.song-cap em').textContent = it.src ? it.platform : 'файл не найден';
     }
   });
   const np = $('#nowPlaying');
@@ -38,7 +38,7 @@ function syncPlay(){
   const el = spWorld.querySelector(`.item[data-id="${playing.id}"] .song`);
   if (el){
     el.classList.toggle('playing', on); el.classList.toggle('paused', !on);
-    el.querySelector('.cd-btn').textContent = on ? '❚❚' : '▶';
+    el.querySelector('.cd-btn').innerHTML = on ? ICON_PAUSE : ICON_PLAY;
     el.querySelector('.cd').style.setProperty('--prog', player.duration ? (player.currentTime/player.duration).toFixed(4) : 0);
     el.querySelector('.song-cap em').textContent = `${mmss(player.currentTime)} / ${mmss(player.duration)}`;
   }

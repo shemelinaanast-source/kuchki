@@ -65,3 +65,31 @@ function splitSong(t){
 }
 const hostOf = url => { try { return new URL(url).hostname.replace(/^www\./,''); } catch { return 'ссылка'; } };
 const yt = q => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q);
+
+// spheres: each period gets one of these soft gradients, in turn
+const SPHERES = [
+  {k:'july',     g:'radial-gradient(circle at 70% 74%,#FF3B1C 0 10%,rgba(255,105,85,.9) 28%,rgba(255,105,85,0) 54%),radial-gradient(circle at 38% 36%,#9CCBFF 0 18%,#C4B7FF 48%,rgba(196,183,255,0) 72%)'},
+  {k:'atlantic', g:'radial-gradient(circle at 76% 78%,#1633C9 0 12%,rgba(38,88,230,.9) 32%,rgba(38,88,230,0) 58%),radial-gradient(circle at 34% 30%,#8FF5C4 0 18%,#6EE3F2 48%,rgba(110,227,242,0) 72%)'},
+  {k:'sept',     g:'radial-gradient(circle at 56% 40%,#5A0DFF 0 14%,rgba(70,92,255,.9) 34%,rgba(70,92,255,0) 58%),radial-gradient(circle at 46% 58%,#8FE9FF 0 28%,rgba(143,233,255,.75) 52%,rgba(143,233,255,0) 72%)'},
+  {k:'lime',     g:'radial-gradient(circle at 68% 72%,#16A886 0 12%,rgba(52,196,140,.85) 32%,rgba(52,196,140,0) 56%),radial-gradient(circle at 38% 34%,#F2FF6B 0 20%,#B6F56A 48%,rgba(182,245,106,0) 72%)'},
+  {k:'rose',     g:'radial-gradient(circle at 70% 72%,#8A2BFF 0 10%,rgba(160,70,255,.85) 30%,rgba(160,70,255,0) 56%),radial-gradient(circle at 38% 36%,#FFB3DE 0 20%,#FF7FBF 48%,rgba(255,127,191,0) 72%)'},
+  {k:'sun',      g:'radial-gradient(circle at 70% 72%,#FF4F7B 0 10%,rgba(255,110,120,.85) 30%,rgba(255,110,120,0) 56%),radial-gradient(circle at 38% 36%,#FFE58A 0 20%,#FFB25C 48%,rgba(255,178,92,0) 72%)'}
+];
+const sphereOf = p => SPHERES.find(s => s.k === p.sphere) || SPHERES[Math.max(0, state.periods.indexOf(p)) % SPHERES.length];
+// the next sphere nobody uses yet (or the next in line)
+const nextSphere = () => (SPHERES.find(s => !state.periods.some(p => sphereOf(p) === s)) || SPHERES[state.periods.length % SPHERES.length]).k;
+
+// the colour of the top band inside a period: grey, lime or ultramarine
+const BANDS = [{k:'grey', c:'#8E8E8E', n:'серый'}, {k:'lime', c:'#C6F24E', n:'салатовый'}, {k:'ultra', c:'#2F3BFF', n:'ультрамарин'}];
+
+// "август’26", or "июль — август’26" for a longer period
+const MNOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+function monthLabel(p){
+  const s = d(p.start), e = p.end ? d(p.end) : new Date(), yy = y => `’${String(y).slice(2)}`;
+  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) return MNOM[s.getMonth()] + yy(s.getFullYear());
+  if (s.getFullYear() === e.getFullYear()) return `${MNOM[s.getMonth()]} — ${MNOM[e.getMonth()]}${yy(e.getFullYear())}`;
+  return `${MNOM[s.getMonth()]}${yy(s.getFullYear())} — ${MNOM[e.getMonth()]}${yy(e.getFullYear())}`;
+}
+
+const ICON_PLAY  = '<svg viewBox="0 0 40 46" aria-hidden="true"><path d="M4 3.5v39a2 2 0 0 0 3 1.7l32-19.5a2 2 0 0 0 0-3.4L7 1.8A2 2 0 0 0 4 3.5z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 40 46" aria-hidden="true"><rect x="5" y="3" width="11" height="40" rx="2"/><rect x="24" y="3" width="11" height="40" rx="2"/></svg>';

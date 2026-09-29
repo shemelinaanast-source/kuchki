@@ -13,11 +13,24 @@ $('#newForm').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('#newName').value.trim() || 'Без названия';
   const prev = cur(); prev.end = today();
-  const used = state.periods.map(p => p.bg);
-  const bg = (BGS.find(b => !b.dark && !used.includes(b.k)) || BGS[0]).k;
-  const p = {id:uid(), name, start:today(), end:null, bg, formula:'', items:[]};
+  const p = {id:uid(), name, start:today(), end:null, sphere:nextSphere(), bg:'bumaga', formula:'', items:[]};
   state.periods.push(p); closeNew(); renderMap(); save();
   animateCam(fitCam(), 500, () => enterSpace(p.id));
+});
+
+/* ---------- band colour: grey / lime / ultramarine, one choice for the whole app ---------- */
+function applyBand(){
+  const b = BANDS.find(x => x.k === state.band) || BANDS[0];
+  document.documentElement.style.setProperty('--band', b.c);
+  document.documentElement.dataset.band = b.k;
+  document.querySelectorAll('.dots button').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.k === b.k)));
+}
+document.querySelectorAll('.dots').forEach(box => {
+  box.innerHTML = BANDS.map(b => `<button type="button" data-k="${b.k}" style="--c:${b.c}" title="${b.n}" aria-label="Цвет полосы: ${b.n}"></button>`).join('');
+  box.addEventListener('click', e => {
+    const b = e.target.closest('button[data-k]'); if (!b) return;
+    state.band = b.dataset.k; applyBand(); save();
+  });
 });
 
 /* ---------- misc ---------- */
@@ -32,8 +45,7 @@ function bump(id){
 let tt = 0;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
 function syncNote(){
-  const where = Store.ok ? 'сохраняется в этом браузере' : 'в этом окне сохранение недоступно';
-  $('#noteText').textContent = state.examples ? `в кучках примеры · ${where}` : where;
+  $('#noteText').textContent = state.examples ? 'в кучках примеры' : Store.ok ? '' : 'в этом окне сохранение недоступно';
   $('#clearBtn').hidden = !state.examples;
 }
 $('#clearBtn').onclick = async () => {
@@ -57,7 +69,8 @@ addEventListener('resize', () => { if (!open) Object.assign(cam, fitCam()); appl
 /* ---------- start ---------- */
 (async function start(){
   const saved = await Store.load();
-  if (saved){
+  // untouched examples from an older design are swapped for the current ones
+  if (saved && !(saved.state.examples && saved.state.v !== SAMPLE_VERSION)){
     state = saved.state;
     // local tracks come back as blobs: give each one a fresh playable url
     state.periods.forEach(p => p.items.forEach(it => {
@@ -66,6 +79,7 @@ addEventListener('resize', () => { if (!open) Object.assign(cam, fitCam()); appl
       if (blob){ it.src = URL.createObjectURL(blob); trackFiles.set(it.id, blob); }
     }));
   } else state = sample();
-  syncNote(); renderMap();
+  state.band ||= 'grey';
+  applyBand(); syncNote(); renderMap();
   Object.assign(cam, fitCam()); applyCam();
 })();

@@ -10,14 +10,15 @@ def read_utf8(path); File.read(path, encoding: 'UTF-8'); end
 
 root = File.expand_path(File.dirname(__FILE__))
 html = read_utf8(File.join(root, 'index.html'))
-css  = read_utf8(File.join(root, 'css/style.css'))
 
 head = html[/<head>(.*?)<\/head>/m, 1]
 body = html[/<body>(.*?)<\/body>/m, 1]
 
 title = head[/<title>.*?<\/title>/m]
-# keep the Google Fonts <link>s, drop the local stylesheet link (we inline it)
-links = head.scan(/<link[^>]*>/).reject { |l| l.include?('css/style.css') }.join("\n")
+# keep external <link>s (fonts), inline local stylesheets in the order they're listed
+local = head.scan(/<link[^>]*href="(css\/[\w.-]+\.css)"[^>]*>/).flatten
+css   = local.map { |rel| read_utf8(File.join(root, rel)) }.join("\n")
+links = head.scan(/<link[^>]*>/).reject { |l| l =~ /href="css\// }.join("\n")
 
 # inline every local script, in the order index.html lists them
 body = body.gsub(%r{<script src="(js/[\w.-]+\.js)(?:\?[^"]*)?"></script>}) do

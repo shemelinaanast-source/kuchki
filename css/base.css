@@ -1,0 +1,109 @@
+/* base.css — только механика: где что стоит, что скрыто, что поверх чего.
+   Здесь нет ни цветов, ни шрифтов, ни теней — весь внешний вид живёт в style.css.
+   Если убрать отсюда правило, что-то перестанет работать (карта не будет двигаться,
+   кучка не откроется, вещи не будут перетаскиваться). Меняй осторожно. */
+
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{overflow:hidden}
+img{max-width:100%}
+
+/* ---------- карта ---------- */
+#map{position:fixed;inset:0;overflow:hidden;touch-action:none;cursor:grab}
+#map.dragging{cursor:grabbing}
+#world{position:absolute;left:0;top:0;transform-origin:0 0}
+#links{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+#links path{fill:none;stroke:currentColor;vector-effect:non-scaling-stroke}
+.syn{opacity:.15}
+.syn.lit{opacity:1}
+
+/* кучка — точка на карте; всё внутри раскладывается от её центра */
+.cluster{position:absolute;width:0;height:0;opacity:var(--o,1)}
+.blob,.peek{position:absolute;left:0;top:0;width:0;height:0}
+.blob{pointer-events:none}
+.puff{position:absolute;display:block;left:var(--x);top:var(--y);transform:translate(-50%,-50%)}
+.orb,.core{position:absolute;display:block;left:0;top:0;transform:translate(-50%,-50%)}
+.pile,.ccover{position:absolute;left:0;top:0;transform:translate(-50%,-50%);cursor:pointer}
+.tk{position:absolute;display:block;transform:translate(-50%,-50%) rotate(var(--r,0deg))}
+.tk-photo,.cc-photo,.pk-photo{background-size:cover;background-position:center}
+.cc-song .holo,.cc-song .cd-label{position:absolute;display:block;inset:0}
+.clabel{position:absolute;left:0;transform:translateX(-50%);width:230px;text-align:center;cursor:pointer}
+
+/* превью: при наведении (или зуме) вместо точек раскрывается коллаж */
+.peek::before{content:"";position:absolute;left:0;top:0;width:calc(var(--u) * 2.7);height:calc(var(--u) * 2.2);transform:translate(-50%,-50%);pointer-events:none;cursor:pointer}
+.cluster.peeking .peek::before{pointer-events:auto}
+.pk{position:absolute;display:block;transform:translate(-50%,-50%) rotate(var(--r,0deg));white-space:nowrap;visibility:hidden;cursor:pointer}
+.cluster.peeking .pk,#map.near .pk{visibility:visible}
+.cluster.peeking .pile,#map.near .pile{visibility:hidden}
+.pk-photo{width:48px;height:58px}
+.pk-quote{white-space:normal;width:128px}
+.cformula{display:none}
+.cluster.peeking .cformula,#map.near .cformula{display:block}
+
+.newnode{position:absolute;width:0;height:0}
+.newnode .plus{position:absolute;width:42px;height:42px;left:-21px;top:-21px;display:grid;place-items:center;cursor:pointer}
+.newnode .plus svg{position:absolute;inset:-4px;width:50px;height:50px;overflow:visible}
+.newnode .plus path{fill:none;stroke:currentColor}
+.newnode .nl{position:absolute;top:30px;left:0;transform:translateX(-50%);white-space:nowrap;cursor:pointer}
+
+/* ---------- панели поверх карты ---------- */
+.topbar{position:fixed;left:0;right:0;top:0;display:flex;justify-content:center;pointer-events:none;z-index:10}
+.topbar .dots{position:absolute;right:0}
+.dots{display:flex}
+.dots button{cursor:pointer;padding:0}
+.corner{position:fixed;left:0;bottom:0;z-index:10}
+.topbar>*{pointer-events:auto}
+.dock{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);width:min(620px,calc(100% - 32px));z-index:30}
+.dock-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dock-row{display:flex}
+.composer{display:flex;align-items:center}
+.filebtn{display:grid;place-items:center;cursor:pointer}
+#composeText{flex:1;min-width:0}
+.pop{position:absolute;left:0;right:0;bottom:100%}
+.pop-row{display:flex}
+.pop input{flex:1;min-width:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 118px);transform:translateX(-50%);white-space:nowrap;pointer-events:none;z-index:40}
+.toast:not(.show){visibility:hidden}
+.veil{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:50}
+
+/* ---------- пространство кучки ---------- */
+/* открывается кругом из центра: JS добавляет .open (сама анимация — в style.css) */
+#space{position:fixed;inset:0;overflow:hidden;z-index:20;clip-path:circle(0px at var(--cx,50%) var(--cy,50%))}
+#space.open{clip-path:circle(150vmax at var(--cx,50%) var(--cy,50%))}
+.sp-canvas{position:absolute;inset:0;touch-action:none;cursor:grab}
+.sp-canvas.dragging{cursor:grabbing}
+.sp-world{position:absolute;left:50%;top:50%;width:0;height:0;transform-origin:0 0}
+.band{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:center;z-index:4}
+.band-back{position:absolute;left:0;cursor:pointer}
+.band .dots{position:absolute;right:0}
+.band-title{min-width:0;text-align:center}
+.sp-sub{position:absolute;left:0;display:flex;align-items:baseline;flex-wrap:wrap;z-index:3}
+.sp-tools{display:inline-flex;align-items:baseline;flex-wrap:wrap}
+.sp-empty{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+
+/* вещи: стоят по своим координатам, --s — их размер, --r — наклон */
+.item{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));user-select:none;-webkit-user-select:none;touch-action:none;cursor:grab}
+.item.dragging{cursor:grabbing}
+.it-body{position:relative}
+.it-meta{position:absolute;left:50%;top:100%;transform:translateX(-50%);display:flex;gap:10px;white-space:nowrap;visibility:hidden}
+.item:hover .it-meta,.item:focus-within .it-meta{visibility:visible}
+@media (hover:none){.it-meta{visibility:visible}}
+.cover-tag{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);white-space:nowrap;pointer-events:none}
+
+.ph{width:calc(190px * var(--s));background-size:cover;background-position:center}
+.ph.fake{aspect-ratio:4/5}
+.ph img{display:block;width:100%;height:auto;pointer-events:none}
+.quote{width:max-content;max-width:calc(280px * var(--s));font-size:calc(16px * var(--s));margin:0}
+.goal{display:flex;align-items:center;width:max-content;max-width:260px;font-size:calc(13px * var(--s));text-align:left}
+.linkc{display:block;width:max-content;max-width:280px;font-size:calc(14px * var(--s))}
+
+/* диск: квадрат под круг, внутри слои диска, обложки, блика, кольца прогресса */
+.song{display:flex;flex-direction:column;align-items:center;width:calc(160px * var(--s));text-align:center}
+.cd{position:relative;display:block;width:calc(136px * var(--s));aspect-ratio:1}
+.cd-disc,.cd-shine{position:absolute;inset:0}
+.cd-label{position:absolute;inset:14%;background-size:cover;background-position:center}
+.cd-ring{position:absolute;inset:-7px;pointer-events:none;visibility:hidden}
+.song.playing .cd-ring,.song.paused .cd-ring{visibility:visible}
+.cd-btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.song-cap small,.song-cap b,.song-cap em{display:block}

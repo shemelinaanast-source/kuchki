@@ -6,78 +6,77 @@
   <title>Кучки вдохновения</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Pixelify+Sans:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif&family=Chewy&display=swap">
+  <!-- base.css — механика (не трогать), style.css — дизайн -->
+  <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <div id="map"><div id="world"></div></div>
 
-<div class="topbar">
-  <div class="brand">Кучки<small id="issue">выпуск № 4 · сентябрь 2026<span>что меня вдохновляло</span></small></div>
-  <div class="right">
-    <div class="note mono" id="note"><span id="noteText">в кучках примеры</span><button id="clearBtn" type="button">начать с чистого</button></div>
-    <div class="zoom">
-      <button class="ghost" id="zOut" type="button" aria-label="Отдалить">−</button>
-      <button class="ghost" id="zFit" type="button" title="Shift+1">вся жизнь</button>
-      <button class="ghost" id="zIn" type="button" aria-label="Приблизить">+</button>
-    </div>
+<header class="topbar">
+  <h1 class="title">What inspired me</h1>
+  <div class="dots" role="group" aria-label="Цвет полосы"></div>
+</header>
+
+<div class="corner">
+  <div class="note" id="note"><span id="noteText"></span><button id="clearBtn" type="button">начать с чистого</button></div>
+  <div class="zoom">
+    <button id="zOut" type="button" aria-label="Отдалить">−</button>
+    <button id="zFit" type="button" title="Shift+1">вся жизнь</button>
+    <button id="zIn" type="button" aria-label="Приблизить">+</button>
   </div>
 </div>
 
 <section id="space" hidden aria-label="Пространство периода">
   <div class="sp-canvas" id="spCanvas"><div class="sp-world" id="spWorld"></div></div>
   <div class="sp-empty" id="spEmpty" hidden>Тут пока пусто.<br>Вкинь первую песню, цитату или картинку.</div>
-  <div class="sp-head">
-    <div class="sp-left">
-      <button class="ghost" id="backBtn" type="button">← карта</button>
-      <div class="zoom">
-        <button class="ghost" id="spOut" type="button" aria-label="Отдалить">−</button>
-        <button class="ghost" id="spZoomLbl" type="button" title="Показать всё (Shift+1)">100%</button>
-        <button class="ghost" id="spIn" type="button" aria-label="Приблизить">+</button>
-      </div>
-      <button class="ghost del-btn" id="delBtn" type="button">удалить кучку</button>
+  <div class="band">
+    <button class="band-back" id="backBtn" type="button">← карта</button>
+    <input class="band-title" id="spFormula" placeholder="My mood about this period" aria-label="Заголовок кучки" autocomplete="off">
+    <div class="dots" role="group" aria-label="Цвет полосы"></div>
+  </div>
+  <div class="sp-sub">
+    <input id="spName" aria-label="Название кучки" autocomplete="off">
+    <span class="sp-dates" id="spDates"></span>
+    <span class="sp-tools">
+      <button id="spOut" type="button" aria-label="Отдалить">−</button>
+      <button id="spZoomLbl" type="button" title="Показать всё (Shift+1)">100%</button>
+      <button id="spIn" type="button" aria-label="Приблизить">+</button>
+      <button class="del-btn" id="delBtn" type="button">удалить кучку</button>
       <span class="del-ask" id="delAsk" role="group" aria-label="Подтверждение удаления" hidden>
         <span id="delText">удалить кучку?</span>
-        <button class="ghost danger" id="delYes" type="button">удалить</button>
-        <button class="ghost" id="delNo" type="button">нет</button>
+        <button class="danger" id="delYes" type="button">удалить</button>
+        <button id="delNo" type="button">нет</button>
       </span>
-    </div>
-    <div class="bgpick" id="bgPick" role="group" aria-label="Фон пространства"></div>
-  </div>
-  <div class="sp-center">
-    <input id="spName" aria-label="Название периода" autocomplete="off">
-    <div class="sp-dates mono" id="spDates"></div>
-    <div class="formula">
-      <label for="spFormula">суть периода</label>
-      <textarea id="spFormula" rows="1" placeholder="Одно предложение про этот период…"></textarea>
-    </div>
+    </span>
   </div>
 </section>
 
-<div class="grain" aria-hidden="true"></div>
-
 <div class="dock" id="dock">
-  <div class="pop glass" id="newPop" hidden>
+  <div class="pop" id="newPop" hidden>
     <h3>Новая кучка</h3>
     <p id="newNote"></p>
     <form class="pop-row" id="newForm">
       <input id="newName" placeholder="Как назовёшь этот период?" autocomplete="off">
-      <button class="cbtn send" type="submit">Начать</button>
+      <button class="pop-go" type="submit">начать</button>
     </form>
   </div>
   <div class="dock-top">
-    <span class="dock-hint mono" id="dockHint"></span>
+    <span class="dock-hint" id="dockHint"></span>
     <button class="linkbtn" id="nowPlaying" type="button" hidden></button>
-    <button class="linkbtn" id="newBtn" type="button">+ новая кучка</button>
+    <button class="linkbtn" id="newBtn" type="button" hidden>+ новая кучка</button>
   </div>
-  <form class="composer glass" id="composer">
-    <input id="composeText" placeholder="Цитата, мысль или ссылка на песню…" autocomplete="off">
-    <label class="cbtn" for="fileIn" title="Добавить картинку или mp3">＋<span class="lbl"> файл</span></label>
+  <div class="dock-row">
+    <form class="composer" id="composer">
+      <input id="composeText" placeholder="вкинуть что-то" autocomplete="off">
+      <button class="goal-btn" id="goalBtn" type="button" aria-pressed="false" title="Записать как цель">◎</button>
+      <button class="send" type="submit" aria-label="Вкинуть">→</button>
+    </form>
+    <label class="filebtn" for="fileIn" title="Добавить картинку или музыку">файл</label>
     <input class="sr" type="file" id="fileIn" accept="image/*,audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple>
-    <button class="cbtn" id="goalBtn" type="button" aria-pressed="false" title="Записать как цель">◎<span class="lbl"> цель</span></button>
-    <button class="cbtn send" type="submit" aria-label="Вкинуть">вкинуть</button>
-  </form>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
