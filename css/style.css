@@ -91,6 +91,8 @@ button,input{font:inherit;color:inherit}
 .corner button:hover{color:var(--ink)}
 .note button{text-decoration:underline dotted;text-underline-offset:3px}
 .zoom{display:flex;gap:4px}
+.to-fog{color:var(--grey);text-decoration:none}
+.to-fog:hover{color:var(--ink)}
 
 /* ---------- строка ввода справа внизу ---------- */
 .dock{left:auto;right:38px;bottom:calc(env(safe-area-inset-bottom,0px) + 30px);transform:none;width:auto}

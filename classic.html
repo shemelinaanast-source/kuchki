@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Кучки — классическая версия</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif&family=Chewy&display=swap">
+  <!-- base.css — механика (не трогать), style.css — дизайн -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="map"><div id="world"></div></div>
+
+<header class="topbar">
+  <h1 class="title">What inspired me</h1>
+  <div class="dots" role="group" aria-label="Цвет полосы"></div>
+</header>
+
+<div class="corner">
+  <a class="to-fog" href="index.html">← в туман</a>
+  <div class="note" id="note"><span id="noteText"></span><button id="clearBtn" type="button">начать с чистого</button></div>
+  <div class="zoom">
+    <button id="zOut" type="button" aria-label="Отдалить">−</button>
+    <button id="zFit" type="button" title="Shift+1">вся жизнь</button>
+    <button id="zIn" type="button" aria-label="Приблизить">+</button>
+  </div>
+</div>
+
+<section id="space" hidden aria-label="Пространство периода">
+  <div class="sp-canvas" id="spCanvas"><div class="sp-world" id="spWorld"></div></div>
+  <div class="sp-empty" id="spEmpty" hidden>Тут пока пусто.<br>Вкинь первую песню, цитату или картинку.</div>
+  <div class="band">
+    <button class="band-back" id="backBtn" type="button">← карта</button>
+    <input class="band-title" id="spFormula" placeholder="My mood about this period" aria-label="Заголовок кучки" autocomplete="off">
+    <div class="dots" role="group" aria-label="Цвет полосы"></div>
+  </div>
+  <div class="sp-sub">
+    <input id="spName" aria-label="Название кучки" autocomplete="off">
+    <span class="sp-dates" id="spDates"></span>
+    <span class="sp-tools">
+      <button id="spOut" type="button" aria-label="Отдалить">−</button>
+      <button id="spZoomLbl" type="button" title="Показать всё (Shift+1)">100%</button>
+      <button id="spIn" type="button" aria-label="Приблизить">+</button>
+      <button class="del-btn" id="delBtn" type="button">удалить кучку</button>
+      <span class="del-ask" id="delAsk" role="group" aria-label="Подтверждение удаления" hidden>
+        <span id="delText">удалить кучку?</span>
+        <button class="danger" id="delYes" type="button">удалить</button>
+        <button id="delNo" type="button">нет</button>
+      </span>
+    </span>
+  </div>
+</section>
+
+<div class="dock" id="dock">
+  <div class="pop" id="newPop" hidden>
+    <h3>Новая кучка</h3>
+    <p id="newNote"></p>
+    <form class="pop-row" id="newForm">
+      <input id="newName" placeholder="Как назовёшь этот период?" autocomplete="off">
+      <button class="pop-go" type="submit">начать</button>
+    </form>
+  </div>
+  <div class="dock-top">
+    <span class="dock-hint" id="dockHint"></span>
+    <button class="linkbtn" id="nowPlaying" type="button" hidden></button>
+    <button class="linkbtn" id="newBtn" type="button" hidden>+ новая кучка</button>
+  </div>
+  <div class="dock-row">
+    <form class="composer" id="composer">
+      <input id="composeText" placeholder="вкинуть что-то" autocomplete="off">
+      <button class="goal-btn" id="goalBtn" type="button" aria-pressed="false" title="Записать как цель">◎</button>
+      <button class="send" type="submit" aria-label="Вкинуть">→</button>
+    </form>
+    <label class="filebtn" for="fileIn" title="Добавить картинку или музыку">файл</label>
+    <input class="sr" type="file" id="fileIn" accept="image/*,audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="veil" id="veil" hidden>Отпусти — и оно ляжет в кучку</div>
+<audio id="player" preload="auto"></audio>
+
+<script src="js/utils.js"></script>
+<script src="js/sample.js"></script>
+<script src="js/state.js"></script>
+<script src="js/store.js"></script>
+<script src="js/tags.js"></script>
+<script src="js/map.js"></script>
+<script src="js/space.js"></script>
+<script src="js/player.js"></script>
+<script src="js/add.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

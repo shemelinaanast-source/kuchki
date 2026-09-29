@@ -19,6 +19,7 @@ title = head[/<title>.*?<\/title>/m]
 local = head.scan(/<link[^>]*href="(css\/[\w.-]+\.css)"[^>]*>/).flatten
 css   = local.map { |rel| read_utf8(File.join(root, rel)) }.join("\n")
 links = head.scan(/<link[^>]*>/).reject { |l| l =~ /href="css\// }.join("\n")
+css  += "\n" + head.scan(/<style>(.*?)<\/style>/m).flatten.join("\n")
 
 # inline every local script, in the order index.html lists them
 body = body.gsub(%r{<script src="(js/[\w.-]+\.js)(?:\?[^"]*)?"></script>}) do

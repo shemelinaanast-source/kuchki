@@ -3,95 +3,299 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Кучки вдохновения</title>
+  <title>Кучки в тумане</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif&family=Chewy&display=swap">
-  <!-- base.css — механика (не трогать), style.css — дизайн -->
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;1,400&family=Instrument+Serif&display=swap">
+  <style>
+    /* Главный экран: кучки бродят во весь экран в светлом тумане, без линии и без интерфейса.
+       Данные — те же, что у classic.html (читаются из этого браузера, только чтение).
+       Добавлять вещи пока можно в classic.html — туман увидит их сразу. */
+    :root{
+      --fog:#F6F4F1;
+      --ink:#151515;
+      --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+      --serif:"Instrument Serif",Georgia,serif;
+    }
+    [hidden]{display:none!important}
+    html,body{height:100%;margin:0;overflow:hidden}
+    body{background:var(--fog);color:var(--ink);font:400 13px/1.4 var(--mono);-webkit-font-smoothing:antialiased;cursor:grab;touch-action:none;user-select:none}
+    body.dragging{cursor:grabbing}
+
+    /* туман: несколько огромных мягких пятен, окрашенных цветами твоих кучек */
+    #fog{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+    .cloud{position:absolute;width:90vmax;height:90vmax;border-radius:50%;filter:blur(70px);opacity:.55;
+      animation:drift var(--dur) ease-in-out var(--dl) infinite alternate}
+    @keyframes drift{to{transform:translate(var(--dx),var(--dy)) scale(1.15)}}
+
+    #scene{position:fixed;inset:0}
+    .orb{position:absolute;left:0;top:0;width:400px;height:400px;border-radius:47% 53% 51% 49% / 52% 46% 54% 48%;
+      transform-origin:0 0;will-change:transform,filter,opacity;pointer-events:none}
+    .label{position:absolute;left:0;top:0;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .4s;text-align:center;transform-origin:50% 0}
+    .label b{display:block;font-weight:400;font-size:13px}
+    .label i{display:block;font-style:normal;font-size:11px;color:#777;margin-top:2px}
+
+    /* внутри кучки: её цвет становится всем миром, вещи плавают и проявляются при наведении */
+    #inside{position:fixed;inset:0;opacity:0;transition:opacity .9s ease;pointer-events:none}
+    #inside.on{opacity:1;pointer-events:auto}
+    .in-bg{position:absolute;inset:-20%;background-size:100% 100%;filter:blur(60px) saturate(1.1)}
+    .in-veil{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,255,255,.1),rgba(255,255,255,.55))}
+    .in-head{position:absolute;left:24px;top:22px;pointer-events:none}
+    .in-head h1{margin:0;font:400 44px/1 var(--serif);text-transform:uppercase}
+    .in-head p{margin:6px 0 0;font-size:12px;opacity:.7}
+    #bubbles{position:absolute;inset:0}
+    /* резкость задаёт JS: чем ближе курсор, тем чётче — как линза фокуса */
+    .bub{position:absolute;left:0;top:0;transform-origin:50% 50%;will-change:transform,filter;cursor:pointer}
+    .bub img{display:block;width:170px;border-radius:22px;pointer-events:none;box-shadow:0 24px 40px -24px rgba(0,0,0,.4)}
+    .bub .q{max-width:260px;font-size:16px;line-height:1.45;text-align:center;text-shadow:0 0 14px rgba(255,255,255,.9)}
+    .bub .q.sticker{font:400 52px/1 "Chewy",cursive;-webkit-text-stroke:9px #A6FF3D;paint-order:stroke fill}
+    .bub .song{display:flex;align-items:center;gap:12px;color:var(--ink);text-decoration:none}
+    .bub .song svg{width:44px;fill:var(--ink);filter:drop-shadow(0 6px 8px rgba(0,0,0,.2))}
+    .bub .song span{max-width:170px;font-size:12px}
+    .bub .cap{margin-top:8px;font-size:11px;text-align:center}
+
+    .hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);font-size:11px;color:#8a8a8a;white-space:nowrap;
+      transition:opacity 1.2s;pointer-events:none}
+    .out{position:fixed;right:24px;top:24px;background:none;border:0;font:inherit;font-size:12px;cursor:pointer;color:var(--ink);opacity:.6}
+    .out:hover{opacity:1}
+    .add{position:fixed;right:24px;bottom:20px;font-size:12px;color:var(--ink);opacity:.45;text-decoration:none;z-index:5}
+    .add:hover{opacity:1}
+    body:has(#inside.on) .add{display:none}
+    /* лёгкое зерно, чтобы туман не был пластиковым */
+    .grain{position:fixed;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:.16;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .4 0 0 0 0 .4 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+    @media (prefers-reduced-motion:reduce){.cloud{animation:none}}
+  </style>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chewy&display=swap">
 </head>
 <body>
 
-<div id="map"><div id="world"></div></div>
+<div id="fog"></div>
+<div id="scene"></div>
 
-<header class="topbar">
-  <h1 class="title">What inspired me</h1>
-  <div class="dots" role="group" aria-label="Цвет полосы"></div>
-</header>
-
-<div class="corner">
-  <div class="note" id="note"><span id="noteText"></span><button id="clearBtn" type="button">начать с чистого</button></div>
-  <div class="zoom">
-    <button id="zOut" type="button" aria-label="Отдалить">−</button>
-    <button id="zFit" type="button" title="Shift+1">вся жизнь</button>
-    <button id="zIn" type="button" aria-label="Приблизить">+</button>
-  </div>
+<div id="inside" aria-hidden="true">
+  <div class="in-bg"></div>
+  <div class="in-veil"></div>
+  <div id="bubbles"></div>
+  <div class="in-head"><h1 id="inTitle"></h1><p id="inSub"></p></div>
+  <button class="out" id="outBtn" type="button">наружу ↩</button>
 </div>
 
-<section id="space" hidden aria-label="Пространство периода">
-  <div class="sp-canvas" id="spCanvas"><div class="sp-world" id="spWorld"></div></div>
-  <div class="sp-empty" id="spEmpty" hidden>Тут пока пусто.<br>Вкинь первую песню, цитату или картинку.</div>
-  <div class="band">
-    <button class="band-back" id="backBtn" type="button">← карта</button>
-    <input class="band-title" id="spFormula" placeholder="My mood about this period" aria-label="Заголовок кучки" autocomplete="off">
-    <div class="dots" role="group" aria-label="Цвет полосы"></div>
-  </div>
-  <div class="sp-sub">
-    <input id="spName" aria-label="Название кучки" autocomplete="off">
-    <span class="sp-dates" id="spDates"></span>
-    <span class="sp-tools">
-      <button id="spOut" type="button" aria-label="Отдалить">−</button>
-      <button id="spZoomLbl" type="button" title="Показать всё (Shift+1)">100%</button>
-      <button id="spIn" type="button" aria-label="Приблизить">+</button>
-      <button class="del-btn" id="delBtn" type="button">удалить кучку</button>
-      <span class="del-ask" id="delAsk" role="group" aria-label="Подтверждение удаления" hidden>
-        <span id="delText">удалить кучку?</span>
-        <button class="danger" id="delYes" type="button">удалить</button>
-        <button id="delNo" type="button">нет</button>
-      </span>
-    </span>
-  </div>
-</section>
-
-<div class="dock" id="dock">
-  <div class="pop" id="newPop" hidden>
-    <h3>Новая кучка</h3>
-    <p id="newNote"></p>
-    <form class="pop-row" id="newForm">
-      <input id="newName" placeholder="Как назовёшь этот период?" autocomplete="off">
-      <button class="pop-go" type="submit">начать</button>
-    </form>
-  </div>
-  <div class="dock-top">
-    <span class="dock-hint" id="dockHint"></span>
-    <button class="linkbtn" id="nowPlaying" type="button" hidden></button>
-    <button class="linkbtn" id="newBtn" type="button" hidden>+ новая кучка</button>
-  </div>
-  <div class="dock-row">
-    <form class="composer" id="composer">
-      <input id="composeText" placeholder="вкинуть что-то" autocomplete="off">
-      <button class="goal-btn" id="goalBtn" type="button" aria-pressed="false" title="Записать как цель">◎</button>
-      <button class="send" type="submit" aria-label="Вкинуть">→</button>
-    </form>
-    <label class="filebtn" for="fileIn" title="Добавить картинку или музыку">файл</label>
-    <input class="sr" type="file" id="fileIn" accept="image/*,audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-<div class="veil" id="veil" hidden>Отпусти — и оно ляжет в кучку</div>
-<audio id="player" preload="auto"></audio>
+<div class="grain"></div>
+<a class="add" href="classic.html" title="Добавлять вещи пока можно в классической версии">+ добавить</a>
+<div class="hint" id="hint">тяни — бродить · колесо — глубже или дальше · клик по сфере — внутрь · esc — наружу</div>
 
 <script src="js/utils.js"></script>
 <script src="js/sample.js"></script>
-<script src="js/state.js"></script>
-<script src="js/store.js"></script>
-<script src="js/tags.js"></script>
-<script src="js/map.js"></script>
-<script src="js/space.js"></script>
-<script src="js/player.js"></script>
-<script src="js/add.js"></script>
-<script src="js/app.js"></script>
+<script>
+let state;                                   // utils.js/sample.js ждут глобальный state
+const W = () => innerWidth, H = () => innerHeight;
+const F = 900;                               // «фокусное расстояние» камеры
+const ORB = 400;                             // размер элемента сферы до масштаба
+const asset = src => src;   // пути к картинкам уже от корня проекта
+
+/* ---------- данные: то же хранилище, что у приложения (только чтение) ---------- */
+function loadSaved(){
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open('kuchki', 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore('kv'); r.result.createObjectStore('tracks'); };
+      r.onerror = () => res(null);
+      r.onsuccess = () => {
+        try {
+          const g = r.result.transaction('kv', 'readonly').objectStore('kv').get('state');
+          g.onsuccess = () => res(g.result || null); g.onerror = () => res(null);
+        } catch { res(null); }
+      };
+    } catch { res(null); }
+  });
+}
+
+/* ---------- сцена ---------- */
+const cam = {x:0, y:0, z:-F}, goal = {x:0, y:0, z:-F};
+let nodes = [], hovered = null, inside = null, mouse = {x:W()/2, y:H()/2}, lastOutside = null;
+
+function build(){
+  const ps = state.periods, n = ps.length;
+  // время — это глубина: свежие ближе, давние уходят в туман; по x/y — свободно, как бродят
+  nodes = ps.map((p, i) => {
+    const age = n - 1 - i, h1 = hash(p.id + 'x'), h2 = hash(p.id + 'y'), h3 = hash(p.id + 'z');
+    const el = document.createElement('div');
+    el.className = 'orb'; el.style.background = sphereOf(p).g;
+    const lb = document.createElement('div');
+    lb.className = 'label'; lb.innerHTML = `<b>${esc(p.name)}</b><i>${esc(monthLabel(p))}</i>`;
+    $('#scene').append(el, lb);
+    const fill = Math.min(1, p.items.length/6);
+    // раскладка «на глаз»: спираль вокруг центра экрана, чтобы с порога были видны все
+    const ang = i*2.39996 + h1*.8, rad = .1 + .3*Math.sqrt((n - i - .5)/n);
+    const z = age*420 + h3*140, depth = (z + F)/F;          // во сколько раз дальше фокуса
+    const screen = Math.min(W(), H())*(.34 - .045*Math.min(age, 4))*(.75 + .25*fill);
+    return {p, el, lb, h1, h2, h3,
+      x: Math.cos(ang)*rad*W()*1.1*depth,
+      y: Math.sin(ang)*rad*H()*.85*depth,
+      z,
+      size: screen*depth,
+      glow: i === n - 1 ? 1 : .45 + .55*fill};
+  });
+  // туман окрашен цветами самих кучек
+  const cols = ['rgba(255,190,200,.55)','rgba(170,230,255,.55)','rgba(200,185,255,.55)','rgba(210,255,190,.45)','rgba(255,225,170,.5)'];
+  $('#fog').innerHTML = cols.map((c, i) => `<div class="cloud" style="left:${[-20,55,10,60,-10][i]}vw;top:${[-30,-20,40,50,70][i]}vh;background:radial-gradient(closest-side,${c},transparent);--dur:${24+i*7}s;--dl:${-i*5}s;--dx:${[15,-20,10,-12,18][i]}vw;--dy:${[10,15,-12,-10,-15][i]}vh"></div>`).join('');
+}
+
+// где сфера сейчас: своя траектория блуждания + чуть тянется к курсору
+function place(nd, t){
+  const s1 = t*.00018*(1 + nd.h1*.6), s2 = t*.00014*(1 + nd.h2*.6), s3 = t*.0001*(1 + nd.h3);
+  return {
+    x: nd.x + Math.sin(s1 + nd.h1*6.3)*90 + Math.sin(s2*1.7 + nd.h3*4)*40,
+    y: nd.y + Math.cos(s2 + nd.h2*6.3)*60 + Math.sin(s1*1.3 + nd.h1*3)*30,
+    z: nd.z + Math.sin(s3 + nd.h3*6.3)*70
+  };
+}
+
+function frame(t){
+  // камера плавно догоняет цель; курсор даёт лёгкий параллакс
+  const px = (mouse.x - W()/2)/W(), py = (mouse.y - H()/2)/H();
+  const k = inside ? .06 : .08;
+  cam.x += (goal.x + (inside ? 0 : px*60) - cam.x)*k;
+  cam.y += (goal.y + (inside ? 0 : py*40) - cam.y)*k;
+  cam.z += (goal.z - cam.z)*k;
+  for (const a of ['x','y','z']) if (!Number.isFinite(cam[a])) cam[a] = Number.isFinite(goal[a]) ? goal[a] : 0;
+
+  let best = null, bestD = Infinity;
+  for (const nd of nodes){
+    const q = place(nd, t), dz = q.z - cam.z;
+    if (dz < 40){ nd.el.style.opacity = 0; nd.lb.style.opacity = 0; nd.vis = false; continue; }
+    const s = F/dz, sx = W()/2 + (q.x - cam.x)*s, sy = H()/2 + (q.y - cam.y)*s;
+    const hov = nd === hovered && !inside;
+    const dpx = nd.size*s*(hov ? 1.07 : 1), sc = dpx/ORB;
+    // резко там, где «взгляд» (на расстоянии F), дальше и ближе — размыто
+    const blur = Math.min(26, Math.abs(dz - F)*.016 + (dz > 3200 ? 10 : 0));
+    const fade = Math.max(.12, Math.min(1, 1.35 - dz/5200))*nd.glow;
+    nd.el.style.transform = `translate(${sx - dpx/2}px,${sy - dpx/2}px) scale(${sc})`;
+    nd.el.style.filter = `blur(${(blur/sc).toFixed(2)}px)`;
+    nd.el.style.opacity = inside ? (nd === inside ? 1 : 0) : fade.toFixed(3);
+    nd.el.style.zIndex = String(100000 - Math.round(dz));
+    nd.lb.style.transform = `translate(${sx}px,${sy + dpx/2 + 10}px) translateX(-50%)`;
+    nd.lb.style.zIndex = nd.el.style.zIndex;
+    nd.lb.style.opacity = !inside && (hov || dz < F*1.25) ? Math.min(1, fade + .2) : 0;
+    nd.vis = true; nd.sx = sx; nd.sy = sy; nd.r = dpx/2;
+    // что под курсором: ближняя из тех, в чей круг попали
+    const dd = Math.hypot(mouse.x - sx, mouse.y - sy);
+    if (!inside && dd < dpx*.42 && dz < bestD){ best = nd; bestD = dz; }
+  }
+  if (!inside) hovered = best;
+  if (inside) moveBubbles(t);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- бродить ---------- */
+let drag = null;
+// the nearest sphere whose circle contains the point
+function hit(x, y){
+  let best = null;
+  for (const nd of nodes) if (nd.vis && Math.hypot(x - nd.sx, y - nd.sy) < nd.r*.8 && (!best || nd.z < best.z)) best = nd;
+  return best;
+}
+addEventListener('pointerdown', e => {
+  if (inside || e.button > 0) return;
+  mouse = {x:e.clientX, y:e.clientY};
+  drag = {x:e.clientX, y:e.clientY, gx:goal.x, gy:goal.y, moved:false, over:hit(e.clientX, e.clientY)};
+});
+addEventListener('pointermove', e => {
+  if (Number.isFinite(e.clientX)) mouse = {x:e.clientX, y:e.clientY};
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) > 4){ drag.moved = true; document.body.classList.add('dragging'); }
+  if (drag.moved){ goal.x = drag.gx - dx*1.4; goal.y = drag.gy - dy*1.4; }
+});
+addEventListener('pointerup', () => {
+  if (drag && !drag.moved && drag.over) dive(drag.over);
+  drag = null; document.body.classList.remove('dragging');
+});
+addEventListener('wheel', e => {
+  e.preventDefault();
+  if (inside){ if (e.deltaY < -30) surface(); return; }
+  const far = Math.max(...nodes.map(n => n.z)) + 400;
+  goal.z = Math.max(-F*1.6, Math.min(far - 200, goal.z + (e.ctrlKey ? -e.deltaY*6 : -e.deltaY*2.2)));
+  if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) goal.x += (e.deltaX || e.deltaY)*1.5;
+}, {passive:false});
+addEventListener('keydown', e => { if (e.key === 'Escape') surface(); });
+
+/* ---------- провалиться внутрь и вынырнуть ---------- */
+function dive(nd){
+  lastOutside = {...goal};
+  Object.assign(goal, {x:nd.x, y:nd.y, z:nd.z - 140});   // подлетаем вплотную — сфера заливает экран
+  inside = nd; hovered = null;
+  const p = nd.p;
+  $('.in-bg').style.background = sphereOf(p).g;
+  $('#inTitle').textContent = p.formula || p.name;
+  $('#inSub').textContent = p.formula ? `${p.name} · ${monthLabel(p)}` : monthLabel(p);
+  makeBubbles(p);
+  setTimeout(() => { if (inside === nd) $('#inside').classList.add('on'); }, 550);
+  fadeHint();
+}
+function surface(){
+  if (!inside) return;
+  $('#inside').classList.remove('on');
+  inside = null;
+  Object.assign(goal, lastOutside || {x:0, y:0, z:-F});
+}
+$('#outBtn').onclick = surface;
+
+/* ---------- вещи внутри: плавают, размыты, проявляются при наведении ---------- */
+let bubs = [];
+function makeBubbles(p){
+  const box = $('#bubbles'); box.innerHTML = '';
+  const n = p.items.length;
+  bubs = p.items.map((it, i) => {
+    const el = document.createElement('div'); el.className = 'bub';
+    if (it.type === 'photo' && it.src){
+      el.innerHTML = `<img src="${esc(asset(it.src))}" alt="${esc(it.caption || '')}" draggable="false">${it.caption ? `<div class="cap">${esc(it.caption)}</div>` : ''}`;
+    } else if (it.type === 'song'){
+      const tag = it.url ? `a href="${esc(it.url)}" target="_blank" rel="noopener"` : 'div';
+      el.innerHTML = `<${tag} class="song">${ICON_PLAY}<span>${esc(it.title)}</span></${tag.split(' ')[0]}>`;
+    } else if (it.type === 'goal'){
+      el.innerHTML = `<div class="q">◎ ${esc(it.text)}</div>`;
+    } else if (it.type === 'link'){
+      el.innerHTML = `<a class="q" href="${esc(it.url)}" target="_blank" rel="noopener">↗ ${esc(it.title)}</a>`;
+    } else {
+      el.innerHTML = `<div class="q${it.sticker ? ' sticker' : ''}">${esc(it.text || '')}</div>`;
+    }
+    box.append(el);
+    // раскладываем по кругу с разбросом, чтобы было пространство бродить глазами
+    const a = i/n*Math.PI*2 + hash(it.id)*1.2, r = .22 + .2*hash(it.id + 'r');
+    return {el, it, a, r, h:hash(it.id + 'h'), sc:it.type === 'photo' ? Math.min(1.25, (it.size || 1)) : 1, t:0, f:0};
+  });
+}
+let lastT = 0;
+function moveBubbles(t){
+  const cx = W()/2, cy = H()/2 + 20, R = Math.min(W(), H()), dt = Math.min(50, t - (lastT || t)); lastT = t;
+  for (const b of bubs){
+    // своё время у каждой вещи: у курсора оно почти останавливается, чтобы можно было рассмотреть
+    b.t += dt*(1 - .9*b.f);
+    const w = b.t*.00012*(1 + b.h);
+    const x = cx + Math.cos(b.a + Math.sin(w)*.25)*R*b.r*1.35 + Math.sin(w*1.7 + b.h*6)*25;
+    const y = cy + Math.sin(b.a + Math.cos(w)*.25)*R*b.r + Math.cos(w*1.3 + b.h*4)*20;
+    const dist = Math.hypot(mouse.x - x, mouse.y - y);
+    const target = Math.max(0, Math.min(1, 1 - (dist - 90)/220));   // 1 — в фокусе
+    b.f += (target - b.f)*.12;
+    b.el.style.transform = `translate(${x}px,${y}px) translate(-50%,-50%) scale(${(b.sc*(1 + .06*b.f)).toFixed(3)})`;
+    b.el.style.filter = `blur(${(8*(1 - b.f)).toFixed(2)}px)`;
+    b.el.style.opacity = (.75 + .25*b.f).toFixed(3);
+    b.el.style.zIndex = String(Math.round(b.f*100));
+  }
+}
+
+/* ---------- подсказка исчезает сама ---------- */
+let hintT = setTimeout(fadeHint, 7000);
+function fadeHint(){ clearTimeout(hintT); $('#hint').style.opacity = 0; }
+
+(async () => {
+  const saved = await loadSaved();
+  state = saved && saved.periods?.length ? saved : sample();
+  build();
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>
